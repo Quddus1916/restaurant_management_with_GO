@@ -3,7 +3,7 @@ package controller
 import(
 	"github.com/gin-gonic/gin"
 	"context"
-	"io/ioutil"
+	//"io/ioutil"
 	"time"
 	"log"
 	"net/http"
@@ -45,18 +45,17 @@ func GetMenus() gin.HandlerFunc{
 
 func GetMenu() gin.HandlerFunc{
 	return func(c *gin.Context){
-		ctx , cancel := context.WithTimeout(context.Background(),100*time.Second)
-		body:= c.Request.Body
-		menu_Id,_:= ioutil.ReadAll(body)
-		var fetchedUser models.Menu
-		err:= menucollection.FindOne(ctx,bson.M{"Menu_Id":menu_Id}).Decode(&fetchedUser)
+		ctx , cancel := context.WithTimeout(context.Background(),200*time.Second)
+	    menu_Id := c.Param("menu_id")
+		var fetchedMenu models.Menu
+		err:= menucollection.FindOne(ctx,bson.M{"menu_id":menu_Id}).Decode(&fetchedMenu)
 		defer cancel()
 		if err!= nil{
 			c.JSON(http.StatusInternalServerError,gin.H{"error":"fetching user failed"})
 			return
 		}
 
-		c.JSON(http.StatusOK,fetchedUser)
+		c.JSON(http.StatusOK,fetchedMenu)
 		
 	}
 }
@@ -101,7 +100,8 @@ func UpdateMenu() gin.HandlerFunc{
 			c.JSON(http.StatusBadRequest,gin.H{"error": err.Error()})
 		}
 
-		filter:= bson.M{"Menu_Id":updatedMenu.Menu_Id}
+		filter:= bson.M{"menu_Id":updatedMenu.Menu_Id}
+		updatedMenu.Created_At,_ = time.Parse(time.RFC3339,time.Now().Format(time.RFC3339))
 		upsert:= true
 		opt:= options.UpdateOptions{
 			Upsert : &upsert,
@@ -115,8 +115,27 @@ func UpdateMenu() gin.HandlerFunc{
 			&opt,
 		)
 		defer cancel()
+		c.JSON(http.StatusOK,updatedMenu)
 		
 	}
 }
 
+
+func DeleteMenu() gin.HandlerFunc{
+	return func(c *gin.Context){
+		ctx , cancel := context.WithTimeout(context.Background(),100*time.Second)
+		menu_Id := c.Param("menu_id")
+		
+		
+		dltuser ,err:= menucollection.DeleteOne(ctx,bson.M{"menu_id":menu_Id})
+		defer cancel()
+		if err!= nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"fetching user failed"})
+			return
+		}
+
+		c.JSON(http.StatusOK,dltuser)
+		
+	}
+}
 

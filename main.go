@@ -5,9 +5,9 @@ import(
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"golang-restaurent-management/database"
-	"golang-restaurent-management/controllers"
+	//"golang-restaurent-management/controllers"
 	"golang-restaurent-management/routes"
-	"golang-restaurent-management/middleware"
+	//"golang-restaurent-management/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -22,10 +22,10 @@ func main(){
 	router:= gin.New()
 	router.Use(gin.Logger())
 	routes.UserRoutes(router)
-	router.Use(middleware.Authentication())
+	//router.Use(middleware.Authentication())
 	routes.MenuRoutes(router)
 
 	fmt.Println("server running on port 8080")
-	router.Run(":",+ port)
+	router.Run(":8080")
 
 }

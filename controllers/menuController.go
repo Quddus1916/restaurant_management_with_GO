@@ -8,6 +8,7 @@ import(
 	"log"
 	"net/http"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang-restaurent-management/database"
 	"golang-restaurent-management/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -69,11 +70,11 @@ func CreateMenu() gin.HandlerFunc{
 			c.JSON(http.StatusBadRequest,gin.H{"error": err.Error()})
 			return
 		}
-		validationerr:= validate.Struct(newMenu)
-		if validationerr!= nil{
-			c.JSON(http.StatusInternalServerError,gin.H{"error": validationerr.Error()})
-			return
-		}
+		// validationerr:= validate.Struct(newMenu)
+		// if validationerr!= nil{
+		// 	c.JSON(http.StatusInternalServerError,gin.H{"error": validationerr.Error()})
+		// 	return
+		// }
 		
 		newMenu.ID = primitive.NewObjectID()
 		newMenu.Created_At,_ = time.Parse(time.RFC3339,time.Now().Format(time.RFC3339))
@@ -93,6 +94,27 @@ func CreateMenu() gin.HandlerFunc{
 
 func UpdateMenu() gin.HandlerFunc{
 	return func(c *gin.Context){
+		var ctx, cancel = context.WithTimeout(context.Background() , 100*time.Second)
+		var updatedMenu models.Menu
+		err:= c.BindJSON(&updatedMenu)
+		if err != nil{
+			c.JSON(http.StatusBadRequest,gin.H{"error": err.Error()})
+		}
+
+		filter:= bson.M{"Menu_Id":updatedMenu.Menu_Id}
+		upsert:= true
+		opt:= options.UpdateOptions{
+			Upsert : &upsert,
+		}
+		menucollection.UpdateOne(
+			ctx,
+			filter,
+			bson.D{
+                {"$set",updatedMenu},
+			},
+			&opt,
+		)
+		defer cancel()
 		
 	}
 }
